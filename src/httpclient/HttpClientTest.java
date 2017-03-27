@@ -1,9 +1,13 @@
 package httpclient;
 
+import java.util.List;
+
+import org.apache.http.Header;
 import org.apache.http.HttpEntity;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.cookie.Cookie;
+import org.apache.http.impl.client.AbstractHttpClient;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
@@ -22,24 +26,7 @@ public class HttpClientTest {
 		get();
 	}
 
-	public void get2(){
-		 HttpClient client = new HttpClient(); 
-	      // 设置代理服务器地址和端口      
-	      //client.getHostConfiguration().setProxy("proxy_host_addr",proxy_port); 
-	      // 使用 GET 方法 ，如果服务器需要通过 HTTPS 连接，那只需要将下面 URL 中的 http 换成 https 
-	         HttpMethod method=new GetMethod("http://java.sun.com");
-	      //使用POST方法
-	      //HttpMethod method = new PostMethod("http://java.sun.com");
-	      client.executeMethod(method);
 
-	      //打印服务器返回的状态
-	      System.out.println(method.getStatusLine());
-	      //打印返回的信息
-	      System.out.println(method.getResponseBodyAsString());
-	      //释放连接
-	      method.releaseConnection();
-	}
-	
 	
 	/** 
      * 发送 get请求 
@@ -48,7 +35,8 @@ public class HttpClientTest {
         CloseableHttpClient httpclient = HttpClients.createDefault();  
         try {  
             // 创建httpget.    
-            HttpGet httpget = new HttpGet("http://www.baidu.com/");  
+//            HttpGet httpget = new HttpGet("http://wap.10086.cn/getLoginInfo.jsp");  
+            HttpGet httpget = new HttpGet("http://wap.10086.cn/phoneid.jsp");  
             System.out.println("executing request " + httpget.getURI());  
             // 执行get请求.    
             CloseableHttpResponse response = httpclient.execute(httpget);  
@@ -57,16 +45,41 @@ public class HttpClientTest {
                 HttpEntity entity = response.getEntity();  
                 System.out.println("--------------------------------------");  
                 // 打印响应状态    
-                System.out.println(response.getStatusLine());  
-                
-                
+                System.out.println("打印响应状态:"+response.getStatusLine());  
+                System.out.println("getStatusCode():"+response.getStatusLine().getStatusCode());  
+             // 输出为302，也就是说网页发生了重定向
+                if(response.getStatusLine().getStatusCode()==302){
+                	// 得到重定向后的网页
+                	Header redirect = response.getFirstHeader("Location");
+                    String url = redirect.getValue();
+                    System.out.println("location------"+url);
+                    httpget = new HttpGet(url); 
+                    response = httpclient.execute(httpget);
+                }
+ 
                 if (entity != null) {  
                     // 打印响应内容长度    
                     System.out.println("Response content length: " + entity.getContentLength());  
                     // 打印响应内容    
-                    System.out.println("Response content: " + EntityUtils.toString(entity));  
+                    System.out.println("Response content: " + EntityUtils.toString(entity)); 
+//                    String html = EntityUtils.toString(entity, "GBK");
                 }  
                 System.out.println("------------------------------------");  
+                
+             // 我们这里只是简单的打印出当前Cookie值以判断登录是否成功。
+//                List<Cookie> cookies = ((AbstractHttpClient)httpclient).getCookieStore().getCookies();
+//                for(Cookie cookie: cookies){
+//                	System.out.println(cookie);
+//                }
+                
+             // JSESSIONID
+//                String setCookie = response.getFirstHeader("Set-Cookie").getValue();
+//                String JSESSIONID = setCookie.substring("JSESSIONID=".length(),setCookie.indexOf(";"));
+//                System.out.println("JSESSIONID:" + JSESSIONID);
+                Header []cookies = response.getAllHeaders();
+                for(int i=0;i<cookies.length;i++){
+                	System.out.println(cookies[i].getName()+"======="+cookies[i].getValue()); 
+                }
             } finally {  
                 response.close();  
             }  
