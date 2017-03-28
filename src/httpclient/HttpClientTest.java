@@ -1,17 +1,24 @@
 package httpclient;
 
+import java.util.Iterator;
 import java.util.List;
 
 import org.apache.http.Header;
 import org.apache.http.HttpEntity;
+import org.apache.http.HttpHost;
+import org.apache.http.client.CookieStore;
+import org.apache.http.client.config.RequestConfig;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
+import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.cookie.Cookie;
 import org.apache.http.impl.client.AbstractHttpClient;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
 import org.junit.Test;
+
+import com.gargoylesoftware.htmlunit.javascript.host.geo.Coordinates;
 
 
 public class HttpClientTest {
@@ -22,7 +29,7 @@ public class HttpClientTest {
 	}
 
 	@Test
-	public void unitTest(){
+	public void unitTest() throws Exception{
 		get();
 	}
 
@@ -30,16 +37,38 @@ public class HttpClientTest {
 	
 	/** 
      * 发送 get请求 
+	 * @throws Exception 
      */  
-    public void get() {  
+    public void get() throws Exception {  
         CloseableHttpClient httpclient = HttpClients.createDefault();  
+//        CloseableHttpClient httpclient = new SSLClient();  
+//        RequestConfig config = RequestConfig.DEFAULT ;
+//        System.out.println("getConnectTimeout():"+config.getConnectTimeout());
+//        System.out.println("getConnectionRequestTimeout():"+config.getConnectionRequestTimeout());
+//        System.out.println("getCookieSpec():"+config.getCookieSpec());
+        HttpClientContext context = HttpClientContext.create();
+     
         try {  
             // 创建httpget.    
 //            HttpGet httpget = new HttpGet("http://wap.10086.cn/getLoginInfo.jsp");  
+//            HttpGet httpget = new HttpGet("http://www.baidu.com");  
             HttpGet httpget = new HttpGet("http://wap.10086.cn/phoneid.jsp");  
-            System.out.println("executing request " + httpget.getURI());  
+            System.out.println("executing request " + httpget.getURI()); 
+            
+         // 依次是代理地址，代理端口号，协议类型  
+            HttpHost proxy = new HttpHost("127.0.0.1", 8888, "http");  
+            RequestConfig config = RequestConfig.custom().setProxy(proxy).build(); 
+            httpget.setConfig(config);
+            
             // 执行get请求.    
-            CloseableHttpResponse response = httpclient.execute(httpget);  
+            CloseableHttpResponse response = httpclient.execute(httpget,context);
+//            CookieStore cookieStore = context.getCookieStore();
+//            List<Cookie> cookies = cookieStore.getCookies();
+//            Iterator<Cookie> cookiesItr = cookies.iterator();
+//            while(cookiesItr.hasNext()){
+//            	Cookie cookieTep = cookiesItr.next();
+//            	System.out.println(cookieTep.getName()+"----"+cookieTep.getValue());
+//            }
             try {  
                 // 获取响应实体    
                 HttpEntity entity = response.getEntity();  
@@ -76,9 +105,9 @@ public class HttpClientTest {
 //                String setCookie = response.getFirstHeader("Set-Cookie").getValue();
 //                String JSESSIONID = setCookie.substring("JSESSIONID=".length(),setCookie.indexOf(";"));
 //                System.out.println("JSESSIONID:" + JSESSIONID);
-                Header []cookies = response.getAllHeaders();
-                for(int i=0;i<cookies.length;i++){
-                	System.out.println(cookies[i].getName()+"======="+cookies[i].getValue()); 
+                Header [] headers = response.getAllHeaders();
+                for(int i=0;i<headers.length;i++){
+                	System.out.println(headers[i].getName()+"======="+headers[i].getValue()); 
                 }
             } finally {  
                 response.close();  
